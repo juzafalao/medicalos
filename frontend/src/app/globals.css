@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Variáveis de tema MedicalOS */
+:root {
+  --primary:      #0ea5e9;
+  --primary-dark: #0284c7;
+  --primary-light:#38bdf8;
+  --accent:       #10b981;
+  --accent-dark:  #059669;
+  --bg:           #f8fafc;
+  --bg-card:      #ffffff;
+  --text:         #0f172a;
+  --text-muted:   #64748b;
+  --border:       #e2e8f0;
+  --sidebar-bg:   #0f172a;
+  --sidebar-text: #94a3b8;
+  --sidebar-active:#0ea5e9;
+}
+
+.dark {
+  --bg:         #0f172a;
+  --bg-card:    #1e293b;
+  --text:       #f1f5f9;
+  --text-muted: #94a3b8;
+  --border:     #334155;
+}
+
+/* ── Reset */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar customizada */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── Focus ring acessível */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Inputs base */
+input, textarea, select {
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+/* ── Animações utilitárias */
+@layer utilities {
+  .animate-fade-in   { animation: fadeIn 0.2s ease-in-out; }
+  .animate-slide-up  { animation: slideUp 0.25s ease-out; }
+  .animate-slide-in  { animation: slideIn 0.3s ease-out; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+/* ── Prose para prontuários */
+.prose-clinical {
+  line-height: 1.75;
+  font-size: 0.875rem;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Print — prontuário / documentos */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; color: black; }
+  .print-full { width: 100% !important; max-width: 100% !important; }
+}
