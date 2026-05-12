@@ -2,7 +2,7 @@
 // ROOMS MODULE - Salas de atendimento
 // ============================================================
 import { Module } from '@nestjs/common';
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { DatabaseService } from '../../config/database.service';
@@ -93,10 +93,11 @@ export class RoomsController {
 
   @Get('blocked-slots')
   getBlockedSlots(
+    @Query('doctor_id') doctorId: string,
+    @Query('date') date: string,
     @Req() req: any,
-    @Body() body: { doctor_id: string; date: string },
   ) {
-    return this.svc.getBlockedSlots(req.user.tenant_id, body.doctor_id, body.date);
+    return this.svc.getBlockedSlots(req.user.tenant_id, doctorId, date);
   }
 
   @Post('blocked-slots')

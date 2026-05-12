@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import toast from 'react-hot-toast';
-import api from '@/lib/api';
+import api from '@/lib/api-complete';
 import { DashboardLayout } from '@/components/layout/sidebar';
 
 function SummaryCard({ label, value, icon: Icon, color, sub }: any) {

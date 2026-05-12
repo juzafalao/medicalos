@@ -57,10 +57,16 @@ export class FinancialService {
     startDate?: string,
     endDate?: string,
   ) {
-    const dateFilter =
-      startDate && endDate
-        ? `AND due_date BETWEEN '${startDate}' AND '${endDate}'`
-        : `AND DATE_TRUNC('month', due_date) = DATE_TRUNC('month', NOW())`;
+    const hasDateFilter = startDate && endDate;
+    const params: any[] = [tenantId];
+    let dateFilter: string;
+
+    if (hasDateFilter) {
+      params.push(startDate, endDate);
+      dateFilter = `AND due_date BETWEEN $2 AND $3`;
+    } else {
+      dateFilter = `AND DATE_TRUNC('month', due_date) = DATE_TRUNC('month', NOW())`;
+    }
 
     const result = await this.db.queryOneWithTenant(
       tenantId,
@@ -72,7 +78,7 @@ export class FinancialService {
         COALESCE(SUM(CASE WHEN type='income'  AND status='overdue' THEN amount END), 0) AS overdue_income
        FROM transactions
        WHERE tenant_id = $1 ${dateFilter}`,
-      [tenantId],
+      params,
     );
 
     const income  = parseFloat(result?.total_income  ?? '0');

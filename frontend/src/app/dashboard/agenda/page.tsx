@@ -5,7 +5,7 @@ import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Filter, Clock, User, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '@/lib/api';
+import api from '@/lib/api-complete';
 import { DashboardLayout } from '@/components/layout/sidebar';
 import { clsx } from 'clsx';
 import type { Appointment } from '@/lib/store/auth.store';

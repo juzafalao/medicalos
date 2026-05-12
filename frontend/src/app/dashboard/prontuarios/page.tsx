@@ -8,7 +8,7 @@ import {
   Search, FileText, Plus, ChevronRight, Stethoscope,
   Activity, User, Calendar, Lock, Unlock, Filter,
 } from 'lucide-react';
-import api from '@/lib/api';
+import api from '@/lib/api-complete';
 import { DashboardLayout } from '@/components/layout/sidebar';
 import { useAuthStore } from '@/lib/store/auth.store';
 import toast from 'react-hot-toast';

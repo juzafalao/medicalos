@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Stethoscope, CheckCircle, Loader2, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '@/lib/api';
+import api from '@/lib/api-complete';
 
 export default function PreRegistrationPage({ params }: { params: { token: string } }) {
   const [step, setStep] = useState(1);

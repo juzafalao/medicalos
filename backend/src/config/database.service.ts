@@ -26,7 +26,7 @@ export class DatabaseService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      await client.query(`SET LOCAL app.tenant_id = '${tenantId}'`);
+      await client.query('SELECT set_config($1, $2, true)', ['app.tenant_id', tenantId]);
       const result = await client.query(sql, params);
       await client.query('COMMIT');
       return result.rows;
@@ -56,7 +56,7 @@ export class DatabaseService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      await client.query(`SET LOCAL app.tenant_id = '${tenantId}'`);
+      await client.query('SELECT set_config($1, $2, true)', ['app.tenant_id', tenantId]);
       const result = await callback(client);
       await client.query('COMMIT');
       return result;

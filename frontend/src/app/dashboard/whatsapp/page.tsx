@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MessageSquare, Send, Edit2, Check, X, Zap, Users, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '@/lib/api';
+import api from '@/lib/api-complete';
 import { DashboardLayout } from '@/components/layout/sidebar';
 
 const TEMPLATE_LABELS: Record<string, { label: string; icon: string; desc: string }> = {

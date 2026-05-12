@@ -73,17 +73,3 @@ export class AppointmentsController {
     return this.svc.reschedule(req.user.tenant_id, id, body.scheduled_at);
   }
 }
-
-// ============================================================
-// appointments.module.ts (atualizado com controller)
-// ============================================================
-import { Module } from '@nestjs/common';
-import { WhatsappModule } from '../whatsapp/whatsapp.module';
-
-@Module({
-  imports: [WhatsappModule],
-  providers: [AppointmentsService],
-  controllers: [AppointmentsController],
-  exports: [AppointmentsService],
-})
-export class AppointmentsModule {}

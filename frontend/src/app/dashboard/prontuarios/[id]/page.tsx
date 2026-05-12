@@ -10,7 +10,7 @@ import {
   AlertTriangle, User, Heart,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '@/lib/api';
+import api from '@/lib/api-complete';
 import { DashboardLayout } from '@/components/layout/sidebar';
 import { useAuthStore } from '@/lib/store/auth.store';
 

@@ -14,12 +14,14 @@ export const PG_POOL = 'PG_POOL';
       provide: 'PG_POOL', // Usando a string diretamente aqui
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
+        const ssl = config.get<string>('DB_SSL');
         return new Pool({
           user: config.get<string>('DB_USER'),
           host: config.get<string>('DB_HOST'),
           database: config.get<string>('DB_NAME'),
           password: config.get<string>('DB_PASSWORD'),
           port: config.get<number>('DB_PORT', 5432),
+          ssl: ssl === 'true' ? { rejectUnauthorized: false } : false,
         });
       },
     },
