@@ -8,7 +8,7 @@ import {
   User, Heart, FileText, MessageSquare, X, Edit2, Share2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import api from '@/lib/api';
+import api from '@/lib/api-complete';
 import { DashboardLayout } from '@/components/layout/sidebar';
 import type { Patient } from '@/lib/store/auth.store';
 
