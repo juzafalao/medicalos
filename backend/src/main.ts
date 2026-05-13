@@ -4,9 +4,6 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -36,15 +33,6 @@ async function bootstrap() {
       transform: true,
       transformOptions: { enableImplicitConversion: true },
     }),
-  );
-
-  // Global filters
-  app.useGlobalFilters(new HttpExceptionFilter());
-
-  // Global interceptors
-  app.useGlobalInterceptors(
-    new TransformInterceptor(),
-    new AuditInterceptor(),
   );
 
   // Swagger Documentation
