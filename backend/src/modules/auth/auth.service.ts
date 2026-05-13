@@ -23,7 +23,8 @@ export class AuthService {
       throw new UnauthorizedException('Clínica não encontrada ou inativa');
     }
 
-    const user = await this.db.queryOne(
+    const user = await this.db.queryOneWithTenant(
+      tenant.id,
       `SELECT id, tenant_id, email, password_hash, full_name, role, is_active
        FROM users WHERE email = $1 AND tenant_id = $2`,
       [email.toLowerCase(), tenant.id],
@@ -56,9 +57,10 @@ export class AuthService {
     });
 
     const refreshHash = await bcrypt.hash(refresh_token, 10);
-    await this.db.query(
-      'UPDATE users SET refresh_token = $1, last_login_at = NOW() WHERE id = $2',
-      [refreshHash, user.id],
+    await this.db.queryWithTenant(
+      user.tenant_id,
+      'UPDATE users SET refresh_token = $1, last_login_at = NOW() WHERE id = $2 AND tenant_id = $3',
+      [refreshHash, user.id, user.tenant_id],
     );
 
     return {
@@ -97,10 +99,11 @@ export class AuthService {
   }
 
   // MÉTODO EXIGIDO PELO ERRO: logout
-  async logout(userId: string) {
-    await this.db.query(
-      'UPDATE users SET refresh_token = NULL WHERE id = $1',
-      [userId],
+  async logout(userId: string, tenantId: string) {
+    await this.db.queryWithTenant(
+      tenantId,
+      'UPDATE users SET refresh_token = NULL WHERE id = $1 AND tenant_id = $2',
+      [userId, tenantId],
     );
     return { message: 'Logout realizado com sucesso' };
   }

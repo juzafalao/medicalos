@@ -17,6 +17,7 @@ export default function PreRegistrationPage({ params }: { params: { token: strin
   const { data: preData, isLoading, isError } = useQuery({
     queryKey: ['pre-registration', params.token],
     queryFn: () => api.patients.preRegistration.get(params.token),
+    retry: false,
   });
 
   const completeMutation = useMutation({
