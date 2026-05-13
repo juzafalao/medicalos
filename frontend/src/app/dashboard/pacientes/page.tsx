@@ -10,7 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import api from '@/lib/api-complete';
 import { DashboardLayout } from '@/components/layout/sidebar';
-import type { Patient } from '@/lib/store/auth.store';
+import type { Patient } from '@/types';
 
 // ── Patient form modal
 function PatientModal({ patient, onClose, onSave }: { patient?: Patient; onClose: () => void; onSave: (d: any) => void }) {

@@ -30,7 +30,7 @@ function SummaryCard({ label, value, icon: Icon, color, sub }: any) {
   );
 }
 
-export function FinancialPage() {
+function FinancialPage() {
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [page, setPage] = useState(1);

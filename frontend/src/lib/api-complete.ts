@@ -25,12 +25,13 @@
 // ============================================================
 // lib/api.ts COMPLETO E ATUALIZADO
 // ============================================================
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
 class ApiClient {
-  private client: AxiosInstance;
+  // typed as `any` so the response interceptor's data-unwrapping is reflected in call-site types
+  private client: any;
 
   constructor() {
     this.client = axios.create({
@@ -39,15 +40,15 @@ class ApiClient {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    this.client.interceptors.request.use((config) => {
+    this.client.interceptors.request.use((config: any) => {
       const token = this.getToken();
       if (token) config.headers.Authorization = `Bearer ${token}`;
       return config;
     });
 
     this.client.interceptors.response.use(
-      (res) => res.data?.data ?? res.data,
-      async (error) => {
+      (res: any) => res.data?.data ?? res.data,
+      async (error: any) => {
         const original = error.config;
         if (error.response?.status === 401 && !original._retry) {
           original._retry = true;

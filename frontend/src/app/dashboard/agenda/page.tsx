@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import api from '@/lib/api-complete';
 import { DashboardLayout } from '@/components/layout/sidebar';
 import { clsx } from 'clsx';
-import type { Appointment } from '@/lib/store/auth.store';
+import type { Appointment } from '@/types';
 
 // ── Status badge
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
@@ -129,7 +129,7 @@ function NewAppointmentModal({ date, onClose, onSave }: { date: Date; onClose: (
   const { data: patients } = useQuery({ queryKey: ['patients-select'], queryFn: () => api.patients.list({ limit: 100 }) });
   const { data: doctors } = useQuery({ queryKey: ['doctors-select'], queryFn: () => api.users.list() });
 
-  const doctorList = (doctors as any[])?.filter((u: any) => u.role === 'doctor') || [];
+  const doctorList = ((doctors as unknown) as any[])?.filter((u: any) => u.role === 'doctor') || [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
