@@ -95,7 +95,20 @@ export class AuthService {
       email: user.email,
     };
 
-    return { access_token: this.jwt.sign(payload) };
+    const new_access_token = this.jwt.sign(payload);
+    const new_refresh_token = this.jwt.sign(payload, {
+      secret: this.config.get('JWT_REFRESH_SECRET'),
+      expiresIn: this.config.get('JWT_REFRESH_EXPIRES_IN', '7d'),
+    });
+    const newRefreshHash = await bcrypt.hash(new_refresh_token, 10);
+
+    await this.db.queryWithTenant(
+      user.tenant_id,
+      'UPDATE users SET refresh_token = $1 WHERE id = $2 AND tenant_id = $3',
+      [newRefreshHash, user.id, user.tenant_id],
+    );
+
+    return { access_token: new_access_token, refresh_token: new_refresh_token };
   }
 
   // MÉTODO EXIGIDO PELO ERRO: logout
@@ -117,13 +130,16 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    return this.db.transactionWithTenant('00000000-0000-0000-0000-000000000000', async (client) => {
+    return this.db.transaction(async (client) => {
       const tenantResult = await client.query(
         `INSERT INTO tenants (name, slug, email, phone, cnpj)
          VALUES ($1, $2, $3, $4, $5) RETURNING id`,
         [dto.clinic_name, dto.slug, dto.email, dto.phone, dto.cnpj],
       );
       const tenantId = tenantResult.rows[0].id;
+
+      // Define o tenant_id correto para o restante da transação
+      await client.query('SELECT set_config($1, $2, true)', ['app.tenant_id', tenantId]);
 
       await client.query(
         `INSERT INTO users (tenant_id, email, password_hash, full_name, role)
@@ -139,7 +155,7 @@ export class AuthService {
         ['Salários', 'expense', '#F97316'],
         ['Repasse Médico', 'expense', '#0EA5E9'],
       ];
-      
+
       for (const [name, type, color] of defaultCategories) {
         await client.query(
           `INSERT INTO financial_categories (tenant_id, name, type, color)

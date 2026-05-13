@@ -7,7 +7,8 @@ export class UsersService {
   constructor(private readonly db: DatabaseService) {}
 
   async create(tenantId: string, dto: any) {
-    const existing = await this.db.queryOne(
+    const existing = await this.db.queryOneWithTenant(
+      tenantId,
       'SELECT id FROM users WHERE email = $1 AND tenant_id = $2',
       [dto.email.toLowerCase(), tenantId],
     );
@@ -15,36 +16,35 @@ export class UsersService {
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    const result: any = await this.db.query(
+    return this.db.queryOneWithTenant(
+      tenantId,
       `INSERT INTO users (tenant_id, email, password_hash, full_name, role, specialty, crm)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, email, full_name, role`,
-      [tenantId, dto.email.toLowerCase(), passwordHash, dto.full_name, dto.role, dto.specialty, dto.crm],
+      [tenantId, dto.email.toLowerCase(), passwordHash, dto.full_name, dto.role, dto.specialty ?? null, dto.crm ?? null],
     );
-
-    return result.rows ? result.rows[0] : result[0];
   }
 
   async findAll(tenantId: string) {
-    const result: any = await this.db.query(
-      `SELECT id, email, full_name, role, specialty, crm, is_active, last_login_at 
+    return this.db.queryWithTenant(
+      tenantId,
+      `SELECT id, email, full_name, role, specialty, crm, is_active, last_login_at
        FROM users WHERE tenant_id = $1 ORDER BY full_name`,
       [tenantId],
     );
-    return result.rows || result;
   }
 
-  // MÉTODO ADICIONADO: Busca apenas médicos
   async findDoctors(tenantId: string) {
-    const result: any = await this.db.query(
-      `SELECT id, full_name, specialty, crm FROM users 
+    return this.db.queryWithTenant(
+      tenantId,
+      `SELECT id, full_name, specialty, crm FROM users
        WHERE tenant_id = $1 AND role = 'doctor' AND is_active = true ORDER BY full_name`,
       [tenantId],
     );
-    return result.rows || result;
   }
 
   async findOne(tenantId: string, id: string) {
-    const user = await this.db.queryOne(
+    const user = await this.db.queryOneWithTenant(
+      tenantId,
       'SELECT * FROM users WHERE id = $1 AND tenant_id = $2',
       [id, tenantId],
     );
@@ -59,68 +59,77 @@ export class UsersService {
       passwordHash = await bcrypt.hash(dto.password, 10);
     }
 
-    const result: any = await this.db.query(
-      `UPDATE users 
+    return this.db.queryOneWithTenant(
+      tenantId,
+      `UPDATE users
        SET full_name = $1, role = $2, specialty = $3, crm = $4, is_active = $5, password_hash = $6
-       WHERE id = $7 AND tenant_id = $8 RETURNING id, email, full_name`,
+       WHERE id = $7 AND tenant_id = $8 RETURNING id, email, full_name, role`,
       [
-        dto.full_name || user.full_name,
-        dto.role || user.role,
-        dto.specialty || user.specialty,
-        dto.crm || user.crm,
+        dto.full_name ?? user.full_name,
+        dto.role ?? user.role,
+        dto.specialty ?? user.specialty,
+        dto.crm ?? user.crm,
         dto.is_active !== undefined ? dto.is_active : user.is_active,
         passwordHash,
         id,
         tenantId,
       ],
     );
-    return result.rows ? result.rows[0] : result[0];
   }
 
-  // MÉTODO ADICIONADO: Alternar status ativo/inativo
   async toggleActive(tenantId: string, id: string) {
-    const result: any = await this.db.query(
+    return this.db.queryOneWithTenant(
+      tenantId,
       'UPDATE users SET is_active = NOT is_active WHERE id = $1 AND tenant_id = $2 RETURNING is_active',
       [id, tenantId],
     );
-    return result.rows ? result.rows[0] : result[0];
   }
 
-  // MÉTODO ADICIONADO: Trocar senha
-  async changePassword(tenantId: string, id: string, password: any) {
+  async changePassword(tenantId: string, id: string, password: string) {
     const hash = await bcrypt.hash(password, 10);
-    await this.db.query(
+    await this.db.queryWithTenant(
+      tenantId,
       'UPDATE users SET password_hash = $1 WHERE id = $2 AND tenant_id = $3',
       [hash, id, tenantId],
     );
     return { message: 'Senha alterada com sucesso' };
   }
 
-  // MÉTODOS DE AGENDA (PLACEHOLDERS para o Controller não quebrar)
   async getDoctorSchedule(tenantId: string, userId: string) {
-    const result: any = await this.db.query(
-      'SELECT * FROM doctor_schedules WHERE user_id = $1 AND tenant_id = $2',
+    return this.db.queryWithTenant(
+      tenantId,
+      `SELECT id, day_of_week, start_time, end_time, slot_duration, is_active
+       FROM working_hours
+       WHERE doctor_id = $1 AND tenant_id = $2
+       ORDER BY day_of_week`,
       [userId, tenantId],
     );
-    return result.rows || result;
   }
 
-  async upsertWorkingHours(tenantId: string, userId: string, schedule: any) {
-    // Lógica simplificada de insert/update
-    await this.db.query(
-      'DELETE FROM doctor_schedules WHERE user_id = $1 AND tenant_id = $2',
-      [userId, tenantId],
-    );
-    const result: any = await this.db.query(
-      'INSERT INTO doctor_schedules (tenant_id, user_id, schedule) VALUES ($1, $2, $3) RETURNING *',
-      [tenantId, userId, JSON.stringify(schedule)],
-    );
-    return result.rows ? result.rows[0] : result[0];
+  async upsertWorkingHours(tenantId: string, userId: string, schedule: any[]) {
+    return this.db.transactionWithTenant(tenantId, async (client) => {
+      await client.query(
+        'DELETE FROM working_hours WHERE doctor_id = $1 AND tenant_id = $2',
+        [userId, tenantId],
+      );
+      for (const slot of schedule) {
+        await client.query(
+          `INSERT INTO working_hours (tenant_id, doctor_id, day_of_week, start_time, end_time, slot_duration, is_active)
+           VALUES ($1, $2, $3, $4, $5, $6, true)`,
+          [tenantId, userId, slot.day_of_week, slot.start_time, slot.end_time, slot.slot_duration ?? 30],
+        );
+      }
+      return { message: 'Horários atualizados com sucesso' };
+    });
   }
 
   async remove(tenantId: string, id: string) {
     await this.findOne(tenantId, id);
-    await this.db.query('DELETE FROM users WHERE id = $1 AND tenant_id = $2', [id, tenantId]);
+    await this.db.queryWithTenant(
+      tenantId,
+      'DELETE FROM users WHERE id = $1 AND tenant_id = $2',
+      [id, tenantId],
+    );
     return { message: 'Usuário removido com sucesso' };
   }
 }

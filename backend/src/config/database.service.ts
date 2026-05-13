@@ -68,6 +68,22 @@ export class DatabaseService {
     }
   }
 
+  // Transação sem contexto de tenant (para operações de bootstrap como registro)
+  async transaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await callback(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   // MÉTODO RESTAURADO: Helper para paginação
   buildPaginationQuery(page = 1, limit = 20) {
     const offset = (page - 1) * limit;

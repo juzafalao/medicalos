@@ -22,10 +22,11 @@ interface AuthState {
   setUser: (user: AuthUser) => void;
 }
 
-function setCookie(name: string, value: string, days = 7) {
+function setCookie(name: string, value: string, days = 1) {
   if (typeof document === 'undefined') return;
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
+  const secure = location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Strict${secure}`;
 }
 
 function deleteCookie(name: string) {

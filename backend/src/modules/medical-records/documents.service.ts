@@ -58,10 +58,10 @@ export class DocumentsService {
       extra_vars?: Record<string, string>;
     },
   ) {
-    // Carrega dados necessários
+    // Carrega dados necessários com contexto de tenant para garantir isolamento
     const [patient, doctor, tenant] = await Promise.all([
-      this.db.queryOne('SELECT * FROM patients WHERE id = $1', [dto.patient_id]),
-      this.db.queryOne('SELECT * FROM users WHERE id = $1', [doctorId]),
+      this.db.queryOneWithTenant(tenantId, 'SELECT * FROM patients WHERE id = $1 AND tenant_id = $2', [dto.patient_id, tenantId]),
+      this.db.queryOneWithTenant(tenantId, 'SELECT * FROM users WHERE id = $1 AND tenant_id = $2', [doctorId, tenantId]),
       this.db.queryOne('SELECT * FROM tenants WHERE id = $1', [tenantId]),
     ]);
 

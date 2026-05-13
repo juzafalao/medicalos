@@ -56,9 +56,11 @@ class ApiClient {
             const rt = localStorage.getItem('refresh_token');
             const uid = localStorage.getItem('user_id');
             if (rt && uid) {
-              const res = await this.client.post('/auth/refresh', { user_id: uid, refresh_token: rt });
-              this.setToken(res.data.access_token);
-              original.headers.Authorization = `Bearer ${res.data.access_token}`;
+              // A resposta já vem desembrulhada pelo interceptor de sucesso
+              const res: any = await this.client.post('/auth/refresh', { user_id: uid, refresh_token: rt });
+              this.setToken(res.access_token);
+              if (res.refresh_token) localStorage.setItem('refresh_token', res.refresh_token);
+              original.headers.Authorization = `Bearer ${res.access_token}`;
               return this.client(original);
             }
           } catch { this.logout(); }

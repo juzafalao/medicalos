@@ -1,5 +1,5 @@
 // ============================================================
-// middleware.ts — Proteção de rotas /dashboard
+// middleware.ts — Proteção de rotas /dashboard com validação de JWT
 // ============================================================
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -11,28 +11,45 @@ const PUBLIC_PATHS = [
   '/api',
 ];
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const [, payloadB64] = token.split('.');
+    if (!payloadB64) return true;
+    const payload = JSON.parse(
+      Buffer.from(payloadB64.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8'),
+    );
+    if (!payload.exp) return true;
+    // 30 segundos de tolerância para clock skew
+    return Date.now() / 1000 > payload.exp - 30;
+  } catch {
+    return true;
+  }
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Permite rotas públicas
   const isPublic = PUBLIC_PATHS.some(p => pathname.startsWith(p));
   if (isPublic) return NextResponse.next();
 
-  // Verifica token no cookie (o frontend salva no localStorage,
-  // mas para SSR usamos cookie httpOnly no futuro;
-  // por enquanto redireciona para login se não tiver cookie de sessão)
   const token = request.cookies.get('medicalos_session')?.value;
 
-  // Se acessar /dashboard sem sessão → redireciona para login
-  if (pathname.startsWith('/dashboard') && !token) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
-    return NextResponse.redirect(loginUrl);
+  if (pathname.startsWith('/dashboard')) {
+    // Redireciona se não tiver cookie ou se o JWT estiver expirado
+    if (!token || isTokenExpired(token)) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('from', pathname);
+      const response = NextResponse.redirect(loginUrl);
+      // Remove o cookie expirado para não poluir
+      if (token) response.cookies.delete('medicalos_session');
+      return response;
+    }
   }
 
-  // Redireciona raiz para dashboard ou login
   if (pathname === '/') {
-    if (token) return NextResponse.redirect(new URL('/dashboard', request.url));
+    if (token && !isTokenExpired(token)) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

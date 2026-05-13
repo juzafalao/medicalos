@@ -100,9 +100,8 @@ export class AppointmentsService {
     if (!appointment) throw new NotFoundException('Agendamento não encontrado');
 
     if (status === 'completed') {
-      setTimeout(() => {
-        this.whatsapp.scheduleFollowup(tenantId, id);
-      }, 2 * 60 * 60 * 1000);
+      // Enfileira follow-up assíncrono (o scheduler cuida da entrega com delay correto)
+      this.whatsapp.scheduleFollowup(tenantId, id).catch(() => {});
     }
 
     return appointment;
